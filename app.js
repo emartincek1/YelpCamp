@@ -5,8 +5,9 @@ const ejsMate = require("ejs-mate");
 const { campgroundSchema } = require("./schemas");
 const catchAsync = require("./utils/catchAsync");
 const ExpressError = require("./utils/ExpressError");
-const Campground = require("./models/campground");
 const methodOverride = require("method-override");
+const Campground = require("./models/campground");
+const Review = require("./models/review");
 
 mongoose
   .connect("mongodb://127.0.0.1:27017/yelp-camp")
@@ -100,6 +101,22 @@ app.delete(
     const { id } = req.params;
     await Campground.findByIdAndDelete(id);
     res.redirect("/campgrounds");
+  })
+);
+
+app.post(
+  "/campgrounds/:id/reviews",
+  catchAsync(async (req, res) => {
+    const { id } = req.params;
+    const campground = await Campground.findById(id);
+    const { review } = req.body;
+    const r = new Review({
+      ...review,
+    });
+    campground.reviews.push(r);
+    await campground.save();
+    await r.save();
+    res.redirect(`/campgrounds/${id}`);
   })
 );
 
